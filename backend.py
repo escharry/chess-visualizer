@@ -15,7 +15,6 @@ def index():
 def best_move():
     data = request.get_json()
     current_fen = data['fen']  # Get current FEN from the request
-    print(f"Received FEN: {current_fen}")
 
     # Set up the chess board with the current FEN
     board = chess.Board(current_fen)

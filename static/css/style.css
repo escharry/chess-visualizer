@@ -10,7 +10,7 @@ body {
     margin-right: auto;
 }
 
-#startBtn, #clearBtn, #getMove {
+#startBtn, #clearBtn, #getMove, #getFen {
   margin-top: 20px;
   padding: 10px 20px;
   font-size: 16px;
@@ -18,4 +18,13 @@ body {
   color: white;
   border: none;
   cursor: pointer;
+}
+
+#fenDisplay {
+  display: none;
+}
+
+#bestMoveDisplay {
+  margin-top: 20px;
+  font-size: 16px;
 }

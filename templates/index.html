@@ -5,17 +5,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Chess Move Visualizer</title>
-  <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css"
-    integrity="sha384-q94+BZtLrkL1/ohfjR8c6L+A6qzNH9R2hBLwyoAfu3i/WCvQjzL2RQJ3uNHDISdU" crossorigin="anonymous">
-  <script src="https://code.jquery.com/jquery-3.5.1.min.js"
-    integrity="sha384-ZvpUoO/+PpLXR1lu4jmpXWu80pZlYUAfxl5NsBMWOEPSjUn/6Z/hRTt8+pR6L4N2"
-    crossorigin="anonymous"></script>
-  <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"
-    integrity="sha384-8Vi8VHwn3vjQ9eUHUxex3JSN/NFqUg3QbPyX8kWyb93+8AC/pPWTzj+nHtbC5bxD"
-    crossorigin="anonymous"></script>
-  <link rel="stylesheet" href="static/css/style.css">
+  <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
+  <link rel="icon" href="assets/favicon.ico" type="image/x-icon">
+  <link rel="shortcut icon" href="assets/favicon.ico" type="image/x-icon">
+  <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+  <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
-
+  <link rel="stylesheet" href="static/css/style.css">
 </head>
 
 <body>
@@ -25,55 +21,85 @@
   <button id="startBtn">Start Position</button>
   <button id="clearBtn">Clear Board</button>
   <button id="getMove">Get Best Move</button>
-  <button id="getFen">Get FEN</button>
-  <p id="best-move-display"></p>
+  <button id="getFen">Show FEN</button>
+  <p id="bestMoveDisplay"></p>
+  <p id="fenDisplay"></p>
 
   <script>
+    // Initialize the chess game with chess.js and the board with chessboard.js
+    var game = new Chess();
     var board = Chessboard('board', {
       draggable: true,
-      dropOffBoard: 'snapback',
-      sparePieces: true,
+      position: 'start',
       pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png',
-      position: 'start'
-    })
-    $('#startBtn').on('click', board.start)
-    $('#clearBtn').on('click', board.clear)
-    $('#getFen').on('click', function () {
-      console.log(getCurrentFen())
-    })
+      onDrop: handleMove,  // When a piece is dropped, handle the move
+    });
 
-    var game = new Chess();
-    // Function to update board with FEN
-    function updateBoard(fen) {
-      board.position("YES");  // Update the board to reflect the new position
+    $('#startBtn').on('click', function () {
+      board.start();
+      game.reset();
+      document.getElementById("bestMoveDisplay").innerText = "";
+    })
+    $('#clearBtn').on('click', function () {
+      board.clear();
+      game.reset();
+      document.getElementById("bestMoveDisplay").innerText = "";
+    })
+    // Show or hide the FEN display
+    $('#getFen').on('click', function () {
+      const currentFen = game.fen(); // Get the current FEN string
+      const fenDisplay = $('#fenDisplay');
+
+      // Check if the FEN display is currently hidden
+      if (fenDisplay.is(':hidden')) {
+        // Show the FEN and change the button text to "Hide FEN"
+        fenDisplay.text(currentFen).show();
+        $(this).text('Hide FEN');
+      } else {
+        // Hide the FEN and change the button text to "Show FEN"
+        fenDisplay.hide();
+        $(this).text('Show FEN');
+      }
+    });
+
+    // Handle moves on the board
+    function handleMove(source, target) {
+      var move = game.move({
+        from: source,
+        to: target,
+        promotion: 'q'  // Automatically promote to queen
+      });
+
+      if (move === null) {
+        return 'snapback'; // Invalid move
+      }
+      document.getElementById("bestMoveDisplay").innerText = "";
     }
 
-    // Function to get the current FEN string
-    function getCurrentFen() {
-      return game.fen();
+    // Function to update the board after a move
+    function updateBoard() {
+      board.position(game.fen());  // Update the board to reflect the new FEN
     }
 
     // Function to get the best move from Flask backend
     document.getElementById('getMove').addEventListener('click', function () {
-      const currentFen = getCurrentFen(); // Get the current FEN string
+      const currentFen = game.fen();  // Get the full FEN string, including whose turn it is
       fetch("http://127.0.0.1:3000/best-move", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({ fen: currentFen })
+        body: JSON.stringify({ fen: currentFen })  // Send FEN to the backend
       })
         .then(response => response.json())
         .then(data => {
-          console.log("Best move data:", data);
-          game.move(data.best_move); // Make the best move on the board
-          console.log("FEN:", game.fen());
-          updateBoard(game.fen().split(" ")[0]); // Update the board with the new FEN
-          document.getElementById('best-move-display').innerText = `Best move: ${data.best_move}`;
+          const bestMove = data.best_move;  // Extract the best move from the response
+
+          // Display the best move on the page
+          document.getElementById("bestMoveDisplay").innerText = "Best Move: " + bestMove;
         })
         .catch(err => console.error("Error fetching best move:", err));
     });
-
   </script>
 
 </body>
