@@ -1,0 +1,21 @@
+body {
+  text-align: center;
+  font-family: Arial, sans-serif;
+  background-color: #f4f4f4;
+  align-content: center;
+}
+
+#board {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+#startBtn, #clearBtn, #get-move {
+  margin-top: 20px;
+  padding: 10px 20px;
+  font-size: 16px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
