@@ -14,6 +14,8 @@
     integrity="sha384-8Vi8VHwn3vjQ9eUHUxex3JSN/NFqUg3QbPyX8kWyb93+8AC/pPWTzj+nHtbC5bxD"
     crossorigin="anonymous"></script>
   <link rel="stylesheet" href="static/css/style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+
 </head>
 
 <body>
@@ -22,32 +24,56 @@
   <div id="board" style="width: 400px;"></div>
   <button id="startBtn">Start Position</button>
   <button id="clearBtn">Clear Board</button>
-  <button id="get-move">Get Best Move</button>
+  <button id="getMove">Get Best Move</button>
+  <button id="getFen">Get FEN</button>
+  <p id="best-move-display"></p>
 
   <script>
     var board = Chessboard('board', {
       draggable: true,
       dropOffBoard: 'snapback',
       sparePieces: true,
-      pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png'
+      pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png',
+      position: 'start'
     })
     $('#startBtn').on('click', board.start)
     $('#clearBtn').on('click', board.clear)
+    $('#getFen').on('click', function () {
+      console.log(getCurrentFen())
+    })
 
+    var game = new Chess();
     // Function to update board with FEN
     function updateBoard(fen) {
-      board.position(fen);  // Update the board to reflect the new position
+      board.position("YES");  // Update the board to reflect the new position
+    }
+
+    // Function to get the current FEN string
+    function getCurrentFen() {
+      return game.fen();
     }
 
     // Function to get the best move from Flask backend
-    document.getElementById('get-move').addEventListener('click', function () {
-      fetch("http://127.0.0.1:3000/best-move")
+    document.getElementById('getMove').addEventListener('click', function () {
+      const currentFen = getCurrentFen(); // Get the current FEN string
+      fetch("http://127.0.0.1:3000/best-move", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ fen: currentFen })
+      })
         .then(response => response.json())
         .then(data => {
-          console.log(data);
-          updateBoard(data.fen);
-        });
+          console.log("Best move data:", data);
+          game.move(data.best_move); // Make the best move on the board
+          console.log("FEN:", game.fen());
+          updateBoard(game.fen().split(" ")[0]); // Update the board with the new FEN
+          document.getElementById('best-move-display').innerText = `Best move: ${data.best_move}`;
+        })
+        .catch(err => console.error("Error fetching best move:", err));
     });
+
   </script>
 
 </body>

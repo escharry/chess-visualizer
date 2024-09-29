@@ -10,7 +10,7 @@ body {
     margin-right: auto;
 }
 
-#startBtn, #clearBtn, #get-move {
+#startBtn, #clearBtn, #getMove {
   margin-top: 20px;
   padding: 10px 20px;
   font-size: 16px;
