@@ -66,7 +66,7 @@
     });
 
     // Handle moves on the board
-    async function handleMove(source, target) {
+    function handleMove(source, target) {
       const move = game.move({
         from: source,
         to: target,
@@ -78,12 +78,10 @@
       }
 
       // Fetch and update the evaluation after the move
-      const evaluation = await getEvaluation();
       document.getElementById("bestMoveDisplay").innerText = "";
-      document.getElementById("evaluationDisplay").innerText = "Evaluation: " + (evaluation !== null ? evaluation : "Error");
 
       // Update the board to reflect the new FEN
-      updateBoard();
+      // updateBoard();
     }
 
 
@@ -92,26 +90,41 @@
       board.position(game.fen());  // Update the board to reflect the new FEN
     }
 
+    // Function to fetch the evaluation score from the backend continuously
+    function fetchLiveEvaluation() {
+      setInterval(async () => {
+        const evaluation = await getEvaluation();
+        if (evaluation !== null) {
+          document.getElementById("evaluationDisplay").innerText = "Evaluation: " + evaluation;
+        } else {
+          document.getElementById("evaluationDisplay").innerText = "Evaluation: Error fetching evaluation";
+        }
+      }, 2000);  // Fetch evaluation every 2 seconds (adjust as needed)
+    }
+
     // Function to get the current evaluation score from Flask backend
     async function getEvaluation() {
       const currentFen = game.fen(); // Get the current FEN string
-
-      try {
-        const response = await fetch("http://127.0.0.1:3000/evaluation", { // Fixed typo in the URL
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({ fen: currentFen })
+      return fetch("http://127.0.0.1:3000/evaluation", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ fen: currentFen })
+      })
+        .then(response => response.json())
+        .then(data => data.evaluation) // Return the evaluation from the backend
+        .catch(err => {
+          console.error("Error fetching evaluation:", err);
+          return null; // Return null if there's an error
         });
-
-        const data = await response.json();
-        return data.evaluation; // Return the evaluation value
-      } catch (err) {
-        console.error("Error fetching evaluation:", err);
-        return null; // Return null if there's an error
-      }
     }
+
+    // Start fetching live evaluation when the page loads
+    window.onload = function () {
+      fetchLiveEvaluation();  // Start live evaluation polling
+    };
+
 
     // setInterval(fetchEvaluation, 2000);
     // Function to get the best move from Flask backend
