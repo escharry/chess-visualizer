@@ -11,6 +11,18 @@ engine = chess.engine.SimpleEngine.popen_uci(STOCKFISH_PATH)
 def index():
     return render_template('index.html')
 
+@app.route('/evaluation', methods=['POST'])
+def evaluation():
+    data = request.json
+    fen = data['fen']
+    board = chess.Board(fen)
+    evaluation = engine.analyse(board, chess.engine.Limit(time=3.0))['score']
+    
+    return jsonify({
+        'evaluation': evaluation.relative.score() if evaluation.relative else None
+    })
+
+
 @app.route('/best-move', methods=['POST'])
 def best_move():
     data = request.get_json()
@@ -24,7 +36,10 @@ def best_move():
     board.push(result.move)  # Make the best move
 
     # Return the updated board FEN after the best move
-    return jsonify({'fen': board.fen(), 'best_move': str(result.move)})
+    return jsonify({
+        'fen': board.fen(), 
+        'best_move': str(result.move)
+    })
 
 if __name__ == '__main__':
     app.run(port=3000)

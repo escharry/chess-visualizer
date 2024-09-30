@@ -16,12 +16,13 @@
 
 <body>
 
-  <h1>Stockfish Best Move Visualizer</h1>
+  <h1>Stockfish Visualizer</h1>
   <div id="board" style="width: 400px;"></div>
   <button id="startBtn">Start Position</button>
   <button id="clearBtn">Clear Board</button>
   <button id="getMove">Get Best Move</button>
   <button id="getFen">Show FEN</button>
+  <p id="evaluationDisplay">Evaluation: 0</p>
   <p id="bestMoveDisplay"></p>
   <p id="fenDisplay"></p>
 
@@ -39,11 +40,13 @@
       board.start();
       game.reset();
       document.getElementById("bestMoveDisplay").innerText = "";
+      document.getElementById("evaluationDisplay").innerText = "Evaluation: 0";
     })
     $('#clearBtn').on('click', function () {
       board.clear();
       game.reset();
       document.getElementById("bestMoveDisplay").innerText = "";
+      document.getElementById("evaluationDisplay").innerText = "Evaluation: 0";
     })
     // Show or hide the FEN display
     $('#getFen').on('click', function () {
@@ -63,8 +66,8 @@
     });
 
     // Handle moves on the board
-    function handleMove(source, target) {
-      var move = game.move({
+    async function handleMove(source, target) {
+      const move = game.move({
         from: source,
         to: target,
         promotion: 'q'  // Automatically promote to queen
@@ -73,14 +76,44 @@
       if (move === null) {
         return 'snapback'; // Invalid move
       }
+
+      // Fetch and update the evaluation after the move
+      const evaluation = await getEvaluation();
       document.getElementById("bestMoveDisplay").innerText = "";
+      document.getElementById("evaluationDisplay").innerText = "Evaluation: " + (evaluation !== null ? evaluation : "Error");
+
+      // Update the board to reflect the new FEN
+      updateBoard();
     }
+
 
     // Function to update the board after a move
     function updateBoard() {
       board.position(game.fen());  // Update the board to reflect the new FEN
     }
 
+    // Function to get the current evaluation score from Flask backend
+    async function getEvaluation() {
+      const currentFen = game.fen(); // Get the current FEN string
+
+      try {
+        const response = await fetch("http://127.0.0.1:3000/evaluation", { // Fixed typo in the URL
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ fen: currentFen })
+        });
+
+        const data = await response.json();
+        return data.evaluation; // Return the evaluation value
+      } catch (err) {
+        console.error("Error fetching evaluation:", err);
+        return null; // Return null if there's an error
+      }
+    }
+
+    // setInterval(fetchEvaluation, 2000);
     // Function to get the best move from Flask backend
     document.getElementById('getMove').addEventListener('click', function () {
       const currentFen = game.fen();  // Get the full FEN string, including whose turn it is
