@@ -3,6 +3,8 @@ body {
   font-family: Arial, sans-serif;
   background-color: #f4f4f4;
   align-content: center;
+  margin-top: auto;
+  margin-bottom: auto;
 }
 
 #board {
@@ -22,6 +24,13 @@ body {
 
 #fenDisplay {
   display: none;
+}
+
+#fenInput {
+  margin-top: 20px;
+  font-size: 16px;
+  border: none;
+  margin-right: 10px;
 }
 
 #bestMoveDisplay {

@@ -41,7 +41,8 @@ def best_move():
         try:
             result = engine_move.play(board, chess.engine.Limit(time=2.0))  # Analyze for 2 seconds
             best_move = result.move.uci()
-            return jsonify({"best_move": best_move})
+            san_move = board.san(result.move)
+            return jsonify({"best_move": best_move, "san_move": san_move})
         except Exception as e:
             return jsonify({"error": str(e)}), 500
 

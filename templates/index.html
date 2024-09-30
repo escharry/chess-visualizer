@@ -18,6 +18,8 @@
 
   <h1>Stockfish Visualizer</h1>
   <div id="board" style="width: 400px;"></div>
+  <input type="text" id="fenInput" placeholder="Paste FEN string here" style="width: 300px;">
+  <button id="loadFenBtn">Load FEN</button><br>
   <button id="startBtn">Start Position</button>
   <button id="clearBtn">Clear Board</button>
   <button id="getMove">Get Best Move</button>
@@ -34,6 +36,67 @@
       position: 'start',
       pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png',
       onDrop: handleMove,  // When a piece is dropped, handle the move
+    });
+
+    // Add event listener for keydown events
+    document.addEventListener('keydown', function (event) {
+      switch (event.key) {
+        case 'ArrowUp':
+          goToEnd();
+          break;
+        case 'ArrowDown':
+          goToStart();
+          break;
+        case 'ArrowLeft':
+          goBackOneMove();
+          break;
+        // case 'ArrowRight':
+        //   goForwardOneMove();
+        //   break;
+      }
+    });
+
+    // Function to go to the end of the game
+    function goToEnd() {
+      const history = game.history();
+      while (history.length > 0) {
+        game.undo();  // Undo until we reach the end of the history
+      }
+      updateBoard();  // Update the visual representation of the board
+    }
+
+    // Function to go to the start of the game
+    function goToStart() {
+      game.reset();  // Reset the game to the initial position
+      updateBoard();  // Update the visual representation of the board
+    }
+
+    // Function to go back one move
+    function goBackOneMove() {
+      game.undo();  // Undo the last move
+      updateBoard();  // Update the visual representation of the board
+    }
+
+    // Function to go forward one move (if you have a way to track moves)
+    function goForwardOneMove() {
+      // You will need to implement a way to redo moves
+      // This might require maintaining a redo stack or similar.
+      // chess.js does not have a built-in redo function, so you'll need to handle this yourself.
+
+    }
+
+    // Load FEN string into the board
+    $('#loadFenBtn').on('click', function () {
+      const fenString = $('#fenInput').val();  // Get the FEN string from the input field
+      const validFen = game.load(fenString);   // Load FEN into the game state
+
+      if (validFen) {
+        board.position(fenString);  // Set the board position to the FEN state
+        $('#fenDisplay').text('FEN Loaded: ' + fenString);
+      } else {
+        alert('Invalid FEN string');  // Alert if FEN is invalid
+        $('#fenInput').val('');
+      }
     });
 
     $('#startBtn').on('click', function () {
@@ -140,9 +203,9 @@
         .then(response => response.json())
         .then(data => {
           const bestMove = data.best_move;  // Extract the best move from the response
-
+          const sanMove = data.san_move;  // Extract the best move in SAN format
           // Display the best move on the page
-          document.getElementById("bestMoveDisplay").innerText = "Best Move: " + bestMove;
+          document.getElementById("bestMoveDisplay").innerText = "Best Move: " + sanMove;
         })
         .catch(err => console.error("Error fetching best move:", err));
     });
